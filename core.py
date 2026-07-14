@@ -8,7 +8,7 @@ import numpy as np
 import tkinter as tk
 import win32gui
 import win32con
-from mss import mss
+from mss import MSS
 
 # 안전 장치 설정
 pyautogui.FAILSAFE = True 
@@ -27,7 +27,7 @@ first_startup_general = True
 first_startup_abyss = True
 first_startup_fish = True   
 cached_abyss_options = None
-sct = mss() 
+sct = MSS() 
 
 # 한글 경로 안전 이미지 로더
 if getattr(sys, 'frozen', False):
