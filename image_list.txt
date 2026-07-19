@@ -17,6 +17,7 @@ currency_off.png
 enter_button.png
 general_enter_again.png
 abyss_title.png
+abyss_title2.png
 abyss_easy_on.png
 abyss_easy_off.png
 abyss_hard_on.png
