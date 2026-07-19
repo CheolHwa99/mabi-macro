@@ -28,6 +28,17 @@ first_startup_abyss = True
 first_startup_fish = True   
 cached_abyss_options = None
 sct = MSS() 
+MACRO_START_TIME = time.time()
+
+def get_uptime():
+    sec = int(time.time() - MACRO_START_TIME)
+    h = sec // 3600
+    m = (sec % 3600) // 60
+    s = sec % 60
+    if h > 0: return f"{h}시간 {m}분 {s}초"
+    elif m > 0: return f"{m}분 {s}초"
+    else: return f"{s}초"
+
 
 # 한글 경로 안전 이미지 로더
 if getattr(sys, 'frozen', False):
@@ -244,7 +255,7 @@ def run_general_macro():
             
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 general_run_count += 1 
-                print(f"던전 현재 진행 횟수 : {general_run_count} 바퀴 째")
+                print(f"던전 진행 횟수 (누적: {general_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 time.sleep(0.2); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0)
                 state = "COMBAT"
             time.sleep(0.2)
@@ -332,7 +343,7 @@ def run_abyss_macro():
             
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 abyss_run_count += 1 
-                print(f"어비스 현재 진행 횟수 : {abyss_run_count} 바퀴 째")
+                print(f"어비스 진행 횟수 (누적: {abyss_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 time.sleep(0.1); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0); break
             time.sleep(0.2)
 
@@ -458,7 +469,7 @@ def run_fishing_macro():
             game_click(bite_loc)
             
         fish_run_count += 1
-        print(f"낚시 성공 누적 낚시 횟수 : {fish_run_count} 회\n")
+        print(f"낚시 횟수 (누적: {fish_run_count}회 / 가동 시간: {get_uptime()})\n")
         time.sleep(0.2)
 
 
