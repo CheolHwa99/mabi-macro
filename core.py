@@ -412,17 +412,16 @@ def run_raid_macro():
     global raid_run_count, first_startup_raid
     
     if first_startup_raid:
-        start_countdown("레이드 (혼자하기)") 
+        start_countdown("레이드") 
         first_startup_raid = False
 
     state = "LOBBY" 
     
     while True:
-        # 로비에서 혼자하기 확인 및 출항
+        # 로비에서 혼자하기 세팅 및 출항
         if state == "LOBBY":
             check_coop_popup()
             
-            # 혼자하기 가 꺼져있으면 켜기
             solo_off = find_img_center(IMG_ABYSS_SOLO_OFF, 0.8)
             if solo_off:
                 game_click(solo_off)
@@ -432,6 +431,7 @@ def run_raid_macro():
             set_sail = find_img_center(IMG_RAID_SET_SAIL, 0.8)
             if set_sail:
                 game_click(set_sail)
+                print("배로 출항합니다! 로딩 대기 중...")
                 time.sleep(1.0)
                 state = "SHIP"
             time.sleep(0.2)
@@ -440,17 +440,18 @@ def run_raid_macro():
         elif state == "SHIP":
             check_coop_popup()
             
+            # 서버 끊김 방어
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
             if retry_btn:
-                game_click(retry_btn); time.sleep(0.5)
-                while True:
-                    check_coop_popup(); pyautogui.press('space')
-                    if find_img_center(IMG_AUTO_BTN, 0.8): break
-                    time.sleep(0.3)
+                game_click(retry_btn)
+                time.sleep(0.5)
+                continue
             
+            # 배 안으로 돌아와서 자동 진행 버튼이 보이면 전투 진입 시도
             auto_btn = find_img_center(IMG_AUTO_BTN, 0.8)
             if auto_btn:
                 game_click(auto_btn)
+                print("자동 진행 클릭! 보스방으로 들어갑니다.")
                 time.sleep(1.0)
                 state = "ENTERING_BOSS"
             time.sleep(0.2)
@@ -459,26 +460,28 @@ def run_raid_macro():
         elif state == "ENTERING_BOSS":
             check_coop_popup()
             
+            # 서버 끊김 방어
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
             if retry_btn:
-                game_click(retry_btn); time.sleep(0.5)
-                while True:
-                    check_coop_popup(); pyautogui.press('space')
-                    if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8) or find_img_center(IMG_SKIP_SCENE, 0.8): break
-                    time.sleep(0.3)
-                    
+                game_click(retry_btn)
+                time.sleep(0.5)
+                continue
+                
+            # 스킵 버튼 감시
             skip_scene = find_img_center(IMG_SKIP_SCENE, 0.8)
             if skip_scene:
                 game_click(skip_scene)
-                time.sleep(0.2)
+                print("컷신 스킵 버튼 클릭!")
+                time.sleep(0.5)
                 continue
                 
+            # 스킬 UI가 보이면 컷신이 끝났거나 전투가 시작된 것
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 raid_run_count += 1
-                print(f"레이드 진입 완료! (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
+                print(f"🐉 레이드 보스 진입 완료! (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 time.sleep(0.1); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0)
                 state = "COMBAT"
-            time.sleep(0.2)
+            time.sleep(0.1) # 감시 주기를 매우 짧게!
 
         # 전투 진행 및 클리어 확인
         elif state == "COMBAT":
@@ -494,7 +497,7 @@ def run_raid_macro():
             if find_img_center(IMG_SKILL_OFF, 0.8): game_click(find_img_center(IMG_SKILL_OFF, 0.8)); continue
             if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); time.sleep(0.1); continue
 
-            # 클리어 후 뜨는 레이드 확인 버튼 감시
+            # 전투 종료 레이드 확인 버튼 감시
             raid_confirm = find_img_center(IMG_RAID_CONFIRM, 0.8)
             if raid_confirm:
                 game_click(raid_confirm)
@@ -502,20 +505,30 @@ def run_raid_macro():
                 state = "ENDING"
             time.sleep(0.1)
             
-        # 퇴장 및 배로 복귀
+        # 퇴장 및 출항선으로 이동
         elif state == "ENDING":
             check_coop_popup()
             
+            # 나가기 로딩 중 튕김 방어
+            retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
+            if retry_btn:
+                game_click(retry_btn)
+                time.sleep(0.5)
+                continue
+            
+            # 레이드 나가기 버튼
             raid_exit = find_img_center(IMG_RAID_EXIT, 0.8)
             if raid_exit:
                 game_click(raid_exit)
                 time.sleep(0.5)
                 continue
                 
+            # 출항선으로 이동 버튼
             move_ship = find_img_center(IMG_RAID_MOVE_SHIP, 0.8)
             if move_ship:
                 game_click(move_ship)
-                time.sleep(1.0)
+                print("배로 복귀합니다.")
+                time.sleep(1.5)
                 state = "SHIP"
             time.sleep(0.2)
 
