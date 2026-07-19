@@ -20,14 +20,14 @@ except Exception:
     ctypes.windll.user32.SetProcessDPIAware()
 
 # 전역 변수 설정 (횟수 카운터)
-general_run_count = 0       
-abyss_run_count = 0
-fish_run_count = 0          
+fish_run_count = 0
+raid_run_count = 0
 first_startup_general = True
 first_startup_abyss = True
-first_startup_fish = True   
+first_startup_raid = True
+first_startup_fish = True
 cached_abyss_options = None
-sct = MSS() 
+sct = MSS()
 MACRO_START_TIME = time.time()
 
 def get_uptime():
@@ -140,6 +140,13 @@ IMG_ABYSS_RANDOM_OFF = get_img('abyss_random_off.png')
 IMG_ABYSS_EXIT_BTN = get_img('abyss_exit_button.png')
 IMG_ABYSS_ICON = get_img('abyss_icon.png')
 IMG_ABYSS_MENU_SELECT = get_img('abyss_menu_select.png')
+
+# 레이드용 변수 🌟
+IMG_RAID_TITLE = get_img('raid_title.png')
+IMG_RAID_SET_SAIL = get_img('raid_set_sail.png')
+IMG_RAID_CONFIRM = get_img('raid_confirm.png')
+IMG_RAID_EXIT = get_img('raid_exit.png')
+IMG_RAID_MOVE_SHIP = get_img('raid_move_ship.png')
 
 # 낚시용 변수
 IMG_FISH_STAND = get_img('fish_stand.png')          
@@ -400,6 +407,117 @@ def run_abyss_macro():
             if menu_btn: game_click(menu_btn); time.sleep(0.5); continue
             time.sleep(0.1)
 
+# 레이드 전용 상태 머신
+def run_raid_macro():
+    global raid_run_count, first_startup_raid
+    
+    if first_startup_raid:
+        start_countdown("레이드 (혼자하기)") 
+        first_startup_raid = False
+
+    state = "LOBBY" 
+    
+    while True:
+        # 로비에서 혼자하기 확인 및 출항
+        if state == "LOBBY":
+            check_coop_popup()
+            
+            # 혼자하기 가 꺼져있으면 켜기
+            solo_off = find_img_center(IMG_ABYSS_SOLO_OFF, 0.8)
+            if solo_off:
+                game_click(solo_off)
+                time.sleep(0.3)
+                continue
+                
+            set_sail = find_img_center(IMG_RAID_SET_SAIL, 0.8)
+            if set_sail:
+                game_click(set_sail)
+                time.sleep(1.0)
+                state = "SHIP"
+            time.sleep(0.2)
+
+        # 배 안
+        elif state == "SHIP":
+            check_coop_popup()
+            
+            retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
+            if retry_btn:
+                game_click(retry_btn); time.sleep(0.5)
+                while True:
+                    check_coop_popup(); pyautogui.press('space')
+                    if find_img_center(IMG_AUTO_BTN, 0.8): break
+                    time.sleep(0.3)
+            
+            auto_btn = find_img_center(IMG_AUTO_BTN, 0.8)
+            if auto_btn:
+                game_click(auto_btn)
+                time.sleep(1.0)
+                state = "ENTERING_BOSS"
+            time.sleep(0.2)
+
+        # 레이드 진입
+        elif state == "ENTERING_BOSS":
+            check_coop_popup()
+            
+            retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
+            if retry_btn:
+                game_click(retry_btn); time.sleep(0.5)
+                while True:
+                    check_coop_popup(); pyautogui.press('space')
+                    if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8) or find_img_center(IMG_SKIP_SCENE, 0.8): break
+                    time.sleep(0.3)
+                    
+            skip_scene = find_img_center(IMG_SKIP_SCENE, 0.8)
+            if skip_scene:
+                game_click(skip_scene)
+                time.sleep(0.2)
+                continue
+                
+            if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
+                raid_run_count += 1
+                print(f"레이드 진입 완료! (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
+                time.sleep(0.1); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0)
+                state = "COMBAT"
+            time.sleep(0.2)
+
+        # 전투 진행 및 클리어 확인
+        elif state == "COMBAT":
+            check_coop_popup()
+            
+            if find_img_center(IMG_SKIP_SCENE, 0.8): game_click(find_img_center(IMG_SKIP_SCENE, 0.8)); continue
+            if find_img_center(IMG_SEASON_LVLUP, 0.8):
+                lvl = find_img_center(IMG_SEASON_LVLUP, 0.8)
+                for _ in range(4): game_click_xy(lvl[0], lvl[1]); time.sleep(0.05)
+                continue
+            if find_img_center(IMG_AUTO_BTN, 0.8): 
+                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); time.sleep(0.3); pyautogui.press('b'); continue
+            if find_img_center(IMG_SKILL_OFF, 0.8): game_click(find_img_center(IMG_SKILL_OFF, 0.8)); continue
+            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); time.sleep(0.1); continue
+
+            # 클리어 후 뜨는 레이드 확인 버튼 감시
+            raid_confirm = find_img_center(IMG_RAID_CONFIRM, 0.8)
+            if raid_confirm:
+                game_click(raid_confirm)
+                time.sleep(1.0)
+                state = "ENDING"
+            time.sleep(0.1)
+            
+        # 퇴장 및 배로 복귀
+        elif state == "ENDING":
+            check_coop_popup()
+            
+            raid_exit = find_img_center(IMG_RAID_EXIT, 0.8)
+            if raid_exit:
+                game_click(raid_exit)
+                time.sleep(0.5)
+                continue
+                
+            move_ship = find_img_center(IMG_RAID_MOVE_SHIP, 0.8)
+            if move_ship:
+                game_click(move_ship)
+                time.sleep(1.0)
+                state = "SHIP"
+            time.sleep(0.2)
 
 # 낚시 전용 상태 머신
 def run_fishing_macro():
@@ -506,7 +624,12 @@ def main():
             if abyss_trigger:
                 run_abyss_macro()
                 continue
-
+                
+            raid_trigger = find_img_center(IMG_RAID_TITLE, 0.8)
+            if raid_trigger:
+                run_raid_macro()
+                continue
+            
             fish_trigger = find_img_center(IMG_FISH_STAND, 0.8)
             if not fish_trigger:
                 fish_trigger = find_img_center(IMG_FISH_SIT, 0.8)
