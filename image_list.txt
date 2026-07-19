@@ -41,3 +41,8 @@ fish_auto_mode.png
 fish_bite.png
 fish_bad_1.png
 fish_bad_2.png
+raid_title.png
+raid_set_sail.png
+raid_confirm.png
+raid_exit.png
+raid_move_ship.png
