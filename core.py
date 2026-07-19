@@ -20,6 +20,7 @@ except Exception:
     ctypes.windll.user32.SetProcessDPIAware()
 
 # 전역 변수 설정 (횟수 카운터)
+general_run_count = 0
 fish_run_count = 0
 raid_run_count = 0
 first_startup_general = True
