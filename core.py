@@ -122,6 +122,7 @@ IMG_CURRENCY_OFF = get_img('currency_off.png')
 IMG_ENTER_BTN = get_img('enter_button.png')        
 IMG_GENERAL_ENTER_AGAIN = get_img('general_enter_again.png') 
 IMG_ABYSS_TITLE = get_img('abyss_title.png')
+IMG_ABYSS_TITLE2 = get_img('abyss_title2.png')
 IMG_ABYSS_EASY_ON = get_img('abyss_easy_on.png')
 IMG_ABYSS_EASY_OFF = get_img('abyss_easy_off.png')
 IMG_ABYSS_HARD_ON = get_img('abyss_hard_on.png')
@@ -493,6 +494,9 @@ def main():
                 continue
                 
             abyss_trigger = find_img_center(IMG_ABYSS_TITLE, 0.8)
+            if not abyss_trigger:
+                abyss_trigger = find_img_center(IMG_ABYSS_TITLE2, 0.8)
+
             if abyss_trigger:
                 run_abyss_macro()
                 continue
