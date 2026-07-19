@@ -127,6 +127,8 @@ IMG_ABYSS_EASY_ON = get_img('abyss_easy_on.png')
 IMG_ABYSS_EASY_OFF = get_img('abyss_easy_off.png')
 IMG_ABYSS_HARD_ON = get_img('abyss_hard_on.png')
 IMG_ABYSS_HARD_OFF = get_img('abyss_hard_off.png')
+IMG_ABYSS_VERY_HARD_ON = get_img('abyss_very_hard_on.png')
+IMG_ABYSS_VERY_HARD_OFF = get_img('abyss_very_hard_off.png')
 IMG_ABYSS_SOLO_ON = get_img('abyss_solo_on.png')
 IMG_ABYSS_SOLO_OFF = get_img('abyss_solo_off.png')
 IMG_ABYSS_COOP_ON = get_img('abyss_coop_on.png')
@@ -164,6 +166,7 @@ def ask_abyss_options():
     tk.Label(root, text="◈ 난이도 선택 ◈", font=("맑은 고딕", 10, "bold")).pack(pady=5)
     tk.Radiobutton(root, text="쉬움", variable=diff_var, value="easy").pack()
     tk.Radiobutton(root, text="어려움", variable=diff_var, value="hard").pack()
+    tk.Radiobutton(root, text="매우 어려움", variable=diff_var, value="very_hard").pack()
     tk.Label(root, text="◈ 파티 매칭 선택 ◈", font=("맑은 고딕", 10, "bold")).pack(pady=5)
     tk.Radiobutton(root, text="혼자하기", variable=party_var, value="solo").pack()
     tk.Radiobutton(root, text="함께하기", variable=party_var, value="coop").pack()
@@ -309,8 +312,11 @@ def run_abyss_macro():
             if target_diff == "easy":
                 btn_off = find_img_center(IMG_ABYSS_EASY_OFF, 0.8)
                 if btn_off: game_click(btn_off)
-            else: 
+            elif target_diff == "hard": 
                 btn_off = find_img_center(IMG_ABYSS_HARD_OFF, 0.8)
+                if btn_off: game_click(btn_off)
+            elif target_diff == "very_hard":
+                btn_off = find_img_center(IMG_ABYSS_VERY_HARD_OFF, 0.8)
                 if btn_off: game_click(btn_off)
                     
             if target_party == "solo":
