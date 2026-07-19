@@ -22,6 +22,8 @@ abyss_easy_on.png
 abyss_easy_off.png
 abyss_hard_on.png
 abyss_hard_off.png
+abyss_very_hard_on.png
+abyss_very_hard_off.png
 abyss_solo_on.png
 abyss_solo_off.png
 abyss_coop_on.png
