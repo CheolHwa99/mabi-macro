@@ -197,8 +197,8 @@ def ask_abyss_options():
     party_var = tk.StringVar(value="coop")
     
     tk.Label(root, text="◈ 던전 선택 ◈", font=("맑은 고딕", 10, "bold")).pack(pady=5)
-    tk.Radiobutton(root, text="어비스 1번 던전", variable=dungeon_var, value="dungeon1").pack()
-    tk.Radiobutton(root, text="어비스 2번 던전", variable=dungeon_var, value="dungeon2").pack()
+    tk.Radiobutton(root, text="허상의 정박지", variable=dungeon_var, value="dungeon1").pack()
+    tk.Radiobutton(root, text="광기의 동굴", variable=dungeon_var, value="dungeon2").pack()
 
     tk.Label(root, text="◈ 난이도 선택 ◈", font=("맑은 고딕", 10, "bold")).pack(pady=5)
     tk.Radiobutton(root, text="쉬움", variable=diff_var, value="easy").pack()
