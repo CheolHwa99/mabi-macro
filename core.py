@@ -154,7 +154,6 @@ IMG_ABYSS_SOLO_ON = get_img('abyss_solo_on.png')
 IMG_ABYSS_SOLO_OFF = get_img('abyss_solo_off.png')
 IMG_ABYSS_COOP_ON = get_img('abyss_coop_on.png')
 IMG_ABYSS_COOP_OFF = get_img('abyss_coop_off.png')
-IMG_ABYSS_ENTER_SOLO = get_img('abyss_enter_solo.png')
 IMG_ABYSS_ENTER_COOP = get_img('abyss_enter_coop.png')
 IMG_ABYSS_RANDOM_ON = get_img('abyss_random_on.png')   
 IMG_ABYSS_RANDOM_OFF = get_img('abyss_random_off.png') 
@@ -358,14 +357,13 @@ def run_abyss_macro():
                 if btn_off: game_click(btn_off)
 
             # 입장 클릭
-            if target_party == "solo":
-                abyss_enter = find_img_center(IMG_ABYSS_ENTER_SOLO, 0.8)
-                if abyss_enter: game_click(abyss_enter); break 
-            else:
+            if target_party == "coop":
                 btn_r_off = find_img_center(IMG_ABYSS_RANDOM_OFF, 0.8)
                 if btn_r_off: game_click(btn_r_off); time.sleep(0.1)
-                abyss_enter = find_img_center(IMG_ABYSS_ENTER_COOP, 0.8)
-                if abyss_enter: game_click(abyss_enter); break 
+                
+            abyss_enter = find_img_center(IMG_ABYSS_ENTER_COOP, 0.8)
+            if abyss_enter: game_click(abyss_enter); break 
+            
             time.sleep(0.1)
 
         # [2단계: 로딩]
