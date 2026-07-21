@@ -28,7 +28,6 @@ abyss_solo_on.png
 abyss_solo_off.png
 abyss_coop_on.png
 abyss_coop_off.png
-abyss_enter_solo.png
 abyss_enter_coop.png
 abyss_random_on.png
 abyss_random_off.png
