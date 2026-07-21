@@ -62,11 +62,20 @@ def get_game_monitor():
     hwnd = win32gui.FindWindow(None, "마비노기 모바일")
     if not hwnd: 
         return None
+        
+    # 창이 최소화되어 있으면 원래 크기로 복구
     if win32gui.IsIconic(hwnd):
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        
+    # 게임 창을 항상 맨 앞으로 끌어올림
+    try:
+        if win32gui.GetForegroundWindow() != hwnd:
+            win32gui.SetForegroundWindow(hwnd)
+    except Exception:
+        pass
+        
     left, top, right, bottom = win32gui.GetWindowRect(hwnd)
     return {"left": left, "top": top, "width": right - left, "height": bottom - top}
-
 def find_img_center(img_path, conf=0.8): 
     monitor = get_game_monitor()
     if not monitor: return None
