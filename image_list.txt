@@ -34,7 +34,8 @@ abyss_random_on.png
 abyss_random_off.png
 abyss_exit_button.png
 abyss_icon.png
-abyss_menu_select.png
+abyss_banner1.png
+abyss_banner2.png
 fish_stand.png
 fish_sit.png
 fish_auto_mode.png
