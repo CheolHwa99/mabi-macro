@@ -10,18 +10,14 @@ import win32gui
 import win32con
 from mss import MSS
 
-# ======================================================================
-# 1. 기본 설정 및 전역 변수
-# ======================================================================
+# 기본 설정 및 전역 변수
 pyautogui.FAILSAFE = True 
 
-# 윈도우 (DPI) 오차 해결
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
 except Exception:
     ctypes.windll.user32.SetProcessDPIAware()
 
-# 횟수 카운터 & 시작 플래그
 general_run_count = 0
 abyss_run_count = 0
 fish_run_count = 0
@@ -45,9 +41,45 @@ def get_uptime():
     elif m > 0: return f"{m}분 {s}초"
     else: return f"{s}초"
 
-# ======================================================================
-# 2. 이미지 로딩 및 캡처 함수
-# ======================================================================
+# f2 일시정지 기능
+is_paused = False
+pause_key_pressed = False
+
+def check_pause():
+    global is_paused, pause_key_pressed
+    # F2 키 (0x71) 감지
+    current_state = ctypes.windll.user32.GetAsyncKeyState(0x71) & 0x8000
+    
+    if current_state and not pause_key_pressed:
+        pause_key_pressed = True
+        is_paused = not is_paused
+        if is_paused:
+            print("\n일시정지 중입니다.\n")
+        else:
+            print("\n다시 시작합니다.\n")
+    elif not current_state:
+        pause_key_pressed = False
+        
+    # 일시정지 상태면 여기서 무한 대기 (완벽한 멈춤)
+    while is_paused:
+        current_state = ctypes.windll.user32.GetAsyncKeyState(0x71) & 0x8000
+        if current_state and not pause_key_pressed:
+            pause_key_pressed = True
+            is_paused = False
+            print("\n다시 시작합니다.\n")
+            break
+        elif not current_state:
+            pause_key_pressed = False
+        time.sleep(0.1)
+
+def smart_sleep(seconds):
+    elapsed = 0
+    while elapsed < seconds:
+        check_pause() # 매 순간 일시정지 체크
+        time.sleep(0.05)
+        elapsed += 0.05
+
+# 이미지 로딩 및 캡처 함수
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable)
 else:
@@ -63,11 +95,11 @@ def get_game_monitor():
     if not hwnd: 
         return None
         
-    # 창이 최소화되어 있으면 원래 크기로 복구
     if win32gui.IsIconic(hwnd):
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)        
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
     left, top, right, bottom = win32gui.GetWindowRect(hwnd)
     return {"left": left, "top": top, "width": right - left, "height": bottom - top}
+
 def find_img_center(img_path, conf=0.8): 
     monitor = get_game_monitor()
     if not monitor: return None
@@ -106,10 +138,7 @@ def game_click_xy(x, y):
     time.sleep(0.05)
     pyautogui.mouseUp()
 
-# ======================================================================
-# 3. 이미지 변수 모음
-# ======================================================================
-# 공통 UI
+# 이미지 변수 모음
 IMG_RETRY_BTN = get_img('retry_button.png')        
 IMG_CONTINUE_BTN = get_img('continue_button.png')  
 IMG_POPUP_ENTER = get_img('popup_enter_button.png') 
@@ -125,13 +154,11 @@ IMG_BARD_ULT = get_img('bard_ult_button.png')
 IMG_MENU_BTN = get_img('menu_button.png')          
 IMG_COOP_POPUP = get_img('coop_popup.png')
 
-# 일반 던전
 IMG_CURRENCY_ON = get_img('currency_on.png')       
 IMG_CURRENCY_OFF = get_img('currency_off.png')     
 IMG_ENTER_BTN = get_img('enter_button.png')        
 IMG_GENERAL_ENTER_AGAIN = get_img('general_enter_again.png') 
 
-# 어비스 던전
 IMG_ABYSS_TITLE = get_img('abyss_title.png')
 IMG_ABYSS_TITLE2 = get_img('abyss_title2.png')
 IMG_ABYSS_BANNER1 = get_img('abyss_banner1.png') 
@@ -152,14 +179,12 @@ IMG_ABYSS_RANDOM_OFF = get_img('abyss_random_off.png')
 IMG_ABYSS_EXIT_BTN = get_img('abyss_exit_button.png')
 IMG_ABYSS_ICON = get_img('abyss_icon.png')
 
-# 레이드
 IMG_RAID_TITLE = get_img('raid_title.png')
 IMG_RAID_SET_SAIL = get_img('raid_set_sail.png')
 IMG_RAID_CONFIRM = get_img('raid_confirm.png')
 IMG_RAID_EXIT = get_img('raid_exit.png')
 IMG_RAID_MOVE_SHIP = get_img('raid_move_ship.png')
 
-# 낚시
 IMG_FISH_STAND = get_img('fish_stand.png')          
 IMG_FISH_SIT = get_img('fish_sit.png')              
 IMG_FISH_AUTO_MODE = get_img('fish_auto_mode.png')  
@@ -167,15 +192,13 @@ IMG_FISH_BITE = get_img('fish_bite.png')
 IMG_FISH_BAD_1 = get_img('fish_bad_1.png')          
 IMG_FISH_BAD_2 = get_img('fish_bad_2.png')          
 
-# ======================================================================
-# 4. 공통 편의 함수
-# ======================================================================
+# 공통 편의 함수
 def check_coop_popup():
     coop_popup = find_img_center(IMG_COOP_POPUP, 0.8)
     if coop_popup:
         print("협동 미션 팝업 감지.")
         game_click(coop_popup)
-        time.sleep(0.3) 
+        smart_sleep(0.3) 
         return True
     return False
 
@@ -217,9 +240,7 @@ def start_countdown(mode_name):
         time.sleep(1)
     print("제어 상태 진입\n")
 
-# ======================================================================
-# 5. 매크로 모듈 [일반 던전]
-# ======================================================================
+# 일반 던전 모듈
 def run_general_macro():
     global general_run_count, first_startup_general
     if first_startup_general:
@@ -229,6 +250,8 @@ def run_general_macro():
     state = "LOBBY" 
     
     while True:
+        check_pause() # 시작 전 일시정지 확인
+        
         if state == "LOBBY":
             check_coop_popup()
             cont_btn = find_img_center(IMG_CONTINUE_BTN, 0.8)
@@ -250,13 +273,13 @@ def run_general_macro():
                     if not enter_btn: enter_btn = find_img_center(IMG_GENERAL_ENTER_AGAIN, 0.8)
                     if enter_btn:
                         game_click(enter_btn)
-                        time.sleep(0.5)
+                        smart_sleep(0.5)
                         week_check = find_img_center(IMG_WEEK_CHECK, 0.8)
-                        if week_check: game_click(week_check); time.sleep(0.1)
+                        if week_check: game_click(week_check); smart_sleep(0.1)
                         popup_enter = find_img_center(IMG_POPUP_ENTER, 0.8)
                         if popup_enter: game_click(popup_enter)
                         state = "LOADING"
-            time.sleep(0.2)
+            smart_sleep(0.2)
 
         elif state == "LOADING":
             check_coop_popup()
@@ -265,18 +288,19 @@ def run_general_macro():
             
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
             if retry_btn:
-                game_click(retry_btn); time.sleep(0.5)
+                game_click(retry_btn); smart_sleep(0.5)
                 while True:
+                    check_pause()
                     check_coop_popup(); pyautogui.press('space')
                     if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8): break
-                    time.sleep(0.3)
+                    smart_sleep(0.3)
             
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 general_run_count += 1 
                 print(f"일반 던전 진행 횟수 (누적: {general_run_count}바퀴 / 가동 시간: {get_uptime()})")
-                time.sleep(0.2); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0)
+                smart_sleep(0.2); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0)
                 state = "COMBAT"
-            time.sleep(0.2)
+            smart_sleep(0.2)
 
         elif state == "COMBAT":
             check_coop_popup()
@@ -286,27 +310,26 @@ def run_general_macro():
             if find_img_center(IMG_SKIP_SCENE, 0.8): game_click(find_img_center(IMG_SKIP_SCENE, 0.8)); continue
             if find_img_center(IMG_SEASON_LVLUP, 0.8):
                 lvl = find_img_center(IMG_SEASON_LVLUP, 0.8)
-                for _ in range(4): game_click_xy(lvl[0], lvl[1]); time.sleep(0.05)
+                for _ in range(4): game_click_xy(lvl[0], lvl[1]); smart_sleep(0.05)
                 continue
             if find_img_center(IMG_AUTO_BTN, 0.8): 
-                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); time.sleep(0.3); pyautogui.press('b'); continue
+                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); smart_sleep(0.3); pyautogui.press('b'); continue
             if find_img_center(IMG_SKILL_OFF, 0.8): game_click(find_img_center(IMG_SKILL_OFF, 0.8)); continue
-            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); time.sleep(0.1); continue
+            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); smart_sleep(0.1); continue
 
             clear_loc = find_img_center(IMG_CLEAR, 0.8)
             if clear_loc:
                 while True:
+                    check_pause()
                     check_coop_popup()
                     again_btn = find_img_center(IMG_AGAIN_BTN, 0.8)
                     if again_btn: 
-                        game_click(again_btn); time.sleep(0.5)
+                        game_click(again_btn); smart_sleep(0.5)
                         state = "LOBBY"; break
-                    game_click_xy(clear_loc[0], clear_loc[1]); time.sleep(0.05)
-            time.sleep(0.1)
+                    game_click_xy(clear_loc[0], clear_loc[1]); smart_sleep(0.05)
+            smart_sleep(0.1)
 
-# ======================================================================
-# 6. 매크로 모듈 [어비스 던전]
-# ======================================================================
+# 어비스 모듈
 def run_abyss_macro():
     global abyss_run_count, first_startup_abyss, cached_abyss_options
     if cached_abyss_options is None: cached_abyss_options = ask_abyss_options()
@@ -317,11 +340,11 @@ def run_abyss_macro():
         start_countdown(f"어비스 [{target_dungeon} / {target_diff.upper()} / {target_party.upper()}]"); first_startup_abyss = False
 
     while True:
-        # [1단계: 로비 입장 및 세팅]
+        # 로비 입장 및 세팅
         while True: 
+            check_pause()
             check_coop_popup()
             
-            # 던전 배너 클릭
             if target_dungeon == "dungeon1":
                 banner = find_img_center(IMG_ABYSS_BANNER1, 0.8)
                 if banner: game_click(banner)
@@ -329,7 +352,6 @@ def run_abyss_macro():
                 banner = find_img_center(IMG_ABYSS_BANNER2, 0.8)
                 if banner: game_click(banner)
             
-            # 난이도 설정
             if target_diff == "easy":
                 btn_off = find_img_center(IMG_ABYSS_EASY_OFF, 0.8)
                 if btn_off: game_click(btn_off)
@@ -340,7 +362,6 @@ def run_abyss_macro():
                 btn_off = find_img_center(IMG_ABYSS_VERY_HARD_OFF, 0.8)
                 if btn_off: game_click(btn_off)
                     
-            # 파티 설정
             if target_party == "solo":
                 btn_off = find_img_center(IMG_ABYSS_SOLO_OFF, 0.8)
                 if btn_off: game_click(btn_off)
@@ -348,89 +369,90 @@ def run_abyss_macro():
                 btn_off = find_img_center(IMG_ABYSS_COOP_OFF, 0.8)
                 if btn_off: game_click(btn_off)
 
-            # 입장 클릭
+            # 입장 클릭 (솔로/파티 통일됨)
             if target_party == "coop":
                 btn_r_off = find_img_center(IMG_ABYSS_RANDOM_OFF, 0.8)
-                if btn_r_off: game_click(btn_r_off); time.sleep(0.1)
+                if btn_r_off: game_click(btn_r_off); smart_sleep(0.1)
                 
             abyss_enter = find_img_center(IMG_ABYSS_ENTER_COOP, 0.8)
             if abyss_enter: game_click(abyss_enter); break 
-            
-            time.sleep(0.1)
+            smart_sleep(0.1)
 
-        # [2단계: 로딩]
+        # 로딩
         while True: 
+            check_pause()
             check_coop_popup()
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
             if retry_btn:
-                game_click(retry_btn); time.sleep(0.5)
+                game_click(retry_btn); smart_sleep(0.5)
                 while True:
+                    check_pause()
                     check_coop_popup(); pyautogui.press('space')
                     if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8): break
-                    time.sleep(0.3)
+                    smart_sleep(0.3)
             
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 abyss_run_count += 1 
                 print(f"어비스 진행 횟수 (누적: {abyss_run_count}바퀴 / 가동 시간: {get_uptime()})")
-                time.sleep(0.1); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0); break
-            time.sleep(0.2)
+                smart_sleep(0.1); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0); break
+            smart_sleep(0.2)
 
-        # [3단계: 전투]
+        # 전투
         while True: 
+            check_pause()
             check_coop_popup()
             if find_img_center(IMG_SKIP_SCENE, 0.8): game_click(find_img_center(IMG_SKIP_SCENE, 0.8)); continue
             if find_img_center(IMG_SEASON_LVLUP, 0.8):
                 lvl = find_img_center(IMG_SEASON_LVLUP, 0.8)
-                for _ in range(4): game_click_xy(lvl[0], lvl[1]); time.sleep(0.05)
+                for _ in range(4): game_click_xy(lvl[0], lvl[1]); smart_sleep(0.05)
                 continue
             if find_img_center(IMG_AUTO_BTN, 0.8): 
-                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); time.sleep(0.3); pyautogui.press('b'); continue
+                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); smart_sleep(0.3); pyautogui.press('b'); continue
             if find_img_center(IMG_SKILL_OFF, 0.8): game_click(find_img_center(IMG_SKILL_OFF, 0.8)); continue
-            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); time.sleep(0.1); continue
+            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); smart_sleep(0.1); continue
 
             clear_loc = find_img_center(IMG_CLEAR, 0.8)
             if clear_loc:
                 while True:
+                    check_pause()
                     check_coop_popup()
                     abyss_exit_btn = find_img_center(IMG_ABYSS_EXIT_BTN, 0.8)
                     if abyss_exit_btn: game_click(abyss_exit_btn); break
-                    game_click_xy(clear_loc[0], clear_loc[1]); time.sleep(0.05)
+                    game_click_xy(clear_loc[0], clear_loc[1]); smart_sleep(0.05)
                 break 
-            time.sleep(0.1)
+            smart_sleep(0.1)
 
-        # [4단계: 마을 복귀 및 재입장]
-        print("마을 복귀 및 재입장 감시 중...")
+        # 마을 복귀 및 재입장
         while True:
+            check_pause()
             if check_coop_popup(): continue 
             
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
             if retry_btn:
-                game_click(retry_btn); time.sleep(0.5)
+                game_click(retry_btn); smart_sleep(0.5)
                 while True:
+                    check_pause()
                     if check_coop_popup(): continue
                     pyautogui.press('space')
-                    if find_img_center(IMG_MENU_BTN, 0.8): game_click(find_img_center(IMG_MENU_BTN, 0.8)); time.sleep(0.5); break
-                    time.sleep(0.3)
+                    if find_img_center(IMG_MENU_BTN, 0.8): game_click(find_img_center(IMG_MENU_BTN, 0.8)); smart_sleep(0.5); break
+                    smart_sleep(0.3)
                 continue
 
-            # 메뉴 안 거치고 다이렉트 배너 클릭!
             if target_dungeon == "dungeon1":
                 banner = find_img_center(IMG_ABYSS_BANNER1, 0.8)
-                if banner: game_click(banner); time.sleep(0.5); break 
+                if banner: game_click(banner); smart_sleep(0.5); break 
             else:
                 banner = find_img_center(IMG_ABYSS_BANNER2, 0.8)
-                if banner: game_click(banner); time.sleep(0.5); break 
+                if banner: game_click(banner); smart_sleep(0.5); break 
 
             abyss_icon = find_img_center(IMG_ABYSS_ICON, 0.8)
-            if abyss_icon: game_click(abyss_icon); time.sleep(0.5); continue 
+            if abyss_icon: game_click(abyss_icon); smart_sleep(0.5); continue 
 
             menu_btn = find_img_center(IMG_MENU_BTN, 0.8)
-            if menu_btn: game_click(menu_btn); time.sleep(0.5); continue
-            time.sleep(0.1)
+            if menu_btn: game_click(menu_btn); smart_sleep(0.5); continue
+            smart_sleep(0.1)
 
-# ======================================================================
-# 7. 매크로 모듈 [레이드]
-# ======================================================================
+# 매크로 모듈
 def run_raid_macro():
     global raid_run_count, first_startup_raid
     if first_startup_raid:
@@ -440,89 +462,86 @@ def run_raid_macro():
     state = "LOBBY" 
     
     while True:
+        check_pause()
+        
         if state == "LOBBY":
             check_coop_popup()
             solo_off = find_img_center(IMG_ABYSS_SOLO_OFF, 0.8)
-            if solo_off: game_click(solo_off); time.sleep(0.3); continue
+            if solo_off: game_click(solo_off); smart_sleep(0.3); continue
                 
             set_sail = find_img_center(IMG_RAID_SET_SAIL, 0.8)
             if set_sail:
                 game_click(set_sail)
-                print("배로 출항합니다! 로딩 대기 중...")
-                time.sleep(1.0)
+                print("배로 출항합니다. 로딩 대기 중...")
+                smart_sleep(1.0)
                 state = "SHIP"
-            time.sleep(0.2)
+            smart_sleep(0.2)
 
         elif state == "SHIP":
             check_coop_popup()
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
-            if retry_btn: game_click(retry_btn); time.sleep(0.5); continue
+            if retry_btn: game_click(retry_btn); smart_sleep(0.5); continue
             
             auto_btn = find_img_center(IMG_AUTO_BTN, 0.8)
             if auto_btn:
                 game_click(auto_btn)
-                print("자동 진행 클릭! 보스방으로 들어갑니다.")
-                time.sleep(1.0)
+                smart_sleep(1.0)
                 state = "ENTERING_BOSS"
-            time.sleep(0.2)
+            smart_sleep(0.2)
 
         elif state == "ENTERING_BOSS":
             check_coop_popup()
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
-            if retry_btn: game_click(retry_btn); time.sleep(0.5); continue
+            if retry_btn: game_click(retry_btn); smart_sleep(0.5); continue
                 
             skip_scene = find_img_center(IMG_SKIP_SCENE, 0.8)
             if skip_scene:
                 game_click(skip_scene)
-                print("컷신 스킵 버튼 클릭!")
-                time.sleep(0.5)
+                smart_sleep(0.5)
                 continue
                 
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 raid_run_count += 1
-                print(f"🐉 레이드 보스 진입 완료! (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
-                time.sleep(0.1); pyautogui.press('space'); time.sleep(0.1); pyautogui.press('b'); time.sleep(1.0)
+                print(f"레이드 진행 횟수 (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
+                smart_sleep(0.1); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0)
                 state = "COMBAT"
-            time.sleep(0.1) 
+            smart_sleep(0.1) 
 
         elif state == "COMBAT":
             check_coop_popup()
             if find_img_center(IMG_SKIP_SCENE, 0.8): game_click(find_img_center(IMG_SKIP_SCENE, 0.8)); continue
             if find_img_center(IMG_SEASON_LVLUP, 0.8):
                 lvl = find_img_center(IMG_SEASON_LVLUP, 0.8)
-                for _ in range(4): game_click_xy(lvl[0], lvl[1]); time.sleep(0.05)
+                for _ in range(4): game_click_xy(lvl[0], lvl[1]); smart_sleep(0.05)
                 continue
             if find_img_center(IMG_AUTO_BTN, 0.8): 
-                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); time.sleep(0.3); pyautogui.press('b'); continue
+                game_click(find_img_center(IMG_AUTO_BTN, 0.8)); smart_sleep(0.3); pyautogui.press('b'); continue
             if find_img_center(IMG_SKILL_OFF, 0.8): game_click(find_img_center(IMG_SKILL_OFF, 0.8)); continue
-            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); time.sleep(0.1); continue
+            if find_img_center(IMG_BARD_ULT, 0.8): game_click(find_img_center(IMG_BARD_ULT, 0.8)); smart_sleep(0.1); continue
 
             raid_confirm = find_img_center(IMG_RAID_CONFIRM, 0.8)
             if raid_confirm:
                 game_click(raid_confirm)
-                time.sleep(1.0)
+                smart_sleep(1.0)
                 state = "ENDING"
-            time.sleep(0.1)
+            smart_sleep(0.1)
             
         elif state == "ENDING":
             check_coop_popup()
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
-            if retry_btn: game_click(retry_btn); time.sleep(0.5); continue
+            if retry_btn: game_click(retry_btn); smart_sleep(0.5); continue
             
             raid_exit = find_img_center(IMG_RAID_EXIT, 0.8)
-            if raid_exit: game_click(raid_exit); time.sleep(0.5); continue
+            if raid_exit: game_click(raid_exit); smart_sleep(0.5); continue
                 
             move_ship = find_img_center(IMG_RAID_MOVE_SHIP, 0.8)
             if move_ship:
                 game_click(move_ship)
-                print("배로 복귀합니다.")
-                time.sleep(1.5)
+                smart_sleep(1.5)
                 state = "SHIP"
-            time.sleep(0.2)
+            smart_sleep(0.2)
 
-# ======================================================================
-# 8. 매크로 모듈 [낚시]
-# ======================================================================
+# 낚시 모듈
 def run_fishing_macro():
     global fish_run_count, first_startup_fish
     if first_startup_fish:
@@ -530,54 +549,60 @@ def run_fishing_macro():
         first_startup_fish = False
 
     while True:
+        check_pause()
         check_coop_popup()
         start_btn = find_img_center(IMG_FISH_STAND, 0.8)
         if not start_btn: start_btn = find_img_center(IMG_FISH_SIT, 0.8)
             
         if start_btn:
             game_click(start_btn)
-            time.sleep(1.0) 
+            smart_sleep(1.0) 
 
         check_coop_popup()
         auto_icon = find_img_center(IMG_FISH_AUTO_MODE, 0.8)
         if auto_icon:
             game_click(auto_icon)
-            time.sleep(0.2)
+            smart_sleep(0.2)
             pyautogui.press('space')
-            time.sleep(0.5)
+            smart_sleep(0.5)
 
         bite_loc = None
         fishing_canceled = False
         while True:
+            check_pause()
             check_coop_popup()
             cancel_btn = find_img_center(IMG_FISH_STAND, 0.8)
             if not cancel_btn: cancel_btn = find_img_center(IMG_FISH_SIT, 0.8)
                 
             if cancel_btn:
                 game_click(cancel_btn)
-                time.sleep(1.0)
+                smart_sleep(1.0)
                 fishing_canceled = True
                 break
             
             bite_loc = find_img_center(IMG_FISH_BITE, 0.8)
             if bite_loc: break
-            time.sleep(0.1)
+            smart_sleep(0.1)
 
         if fishing_canceled: continue 
 
-        time.sleep(0.5) 
         check_coop_popup()
         
         bad_text_found = False
-        if find_img_center(IMG_FISH_BAD_1, 0.8) or find_img_center(IMG_FISH_BAD_2, 0.8):
-            bad_text_found = True
+        for _ in range(10):
+            if find_img_center(IMG_FISH_BAD_1, 0.8) or find_img_center(IMG_FISH_BAD_2, 0.8):
+                bad_text_found = True
+                break
+            smart_sleep(0.05)
 
         if bad_text_found:
-            pyautogui.press('w')
-            time.sleep(1.5)
+            print("쓰레기 감지 취소합니다.")
+            pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w') # 단순 press보다 빠르고 확실한 캔슬법
+            smart_sleep(1.5)
             continue
             
-        time.sleep(5.5)
+        # 쓰레기가 아니면 나머지 낚시 시간 대기
+        smart_sleep(5.0)
         
         final_bite = find_img_center(IMG_FISH_BITE, 0.8)
         if final_bite: game_click(final_bite)
@@ -585,48 +610,46 @@ def run_fishing_macro():
             
         fish_run_count += 1
         print(f"낚시 횟수 (누적: {fish_run_count}회 / 가동 시간: {get_uptime()})\n")
-        time.sleep(0.2)
+        smart_sleep(0.2)
 
 # ======================================================================
-# 9. 메인 구동 모듈
+# 🏁 9. 메인 구동 모듈
 # ======================================================================
 def main():
     print("========================================")
     print("마비노기 모바일 매크로 가동 준비 완료")
+    print("작동 중 'F2' 키를 누르면 일시정지됩니다.")
     print("========================================\n")
     
     try:
         while True:
+            check_pause() # 메인 화면에서도 일시정지 체크
             check_coop_popup()
             
-            # 일반 던전 감지
             general_trigger = find_img_center(IMG_CURRENCY_ON, 0.8)
             if not general_trigger: general_trigger = find_img_center(IMG_CURRENCY_OFF, 0.8)
             if general_trigger:
                 run_general_macro()
                 continue
                 
-            # 어비스 던전 감지
             abyss_trigger = find_img_center(IMG_ABYSS_TITLE, 0.8)
             if not abyss_trigger: abyss_trigger = find_img_center(IMG_ABYSS_TITLE2, 0.8)
             if abyss_trigger:
                 run_abyss_macro()
                 continue
                 
-            # 레이드 감지
             raid_trigger = find_img_center(IMG_RAID_TITLE, 0.8)
             if raid_trigger:
                 run_raid_macro()
                 continue
             
-            # 낚시 감지
             fish_trigger = find_img_center(IMG_FISH_STAND, 0.8)
             if not fish_trigger: fish_trigger = find_img_center(IMG_FISH_SIT, 0.8)
             if fish_trigger:
                 run_fishing_macro()
                 continue
 
-            time.sleep(0.2) 
+            smart_sleep(0.2) 
 
     except pyautogui.FailSafeException:
         print("\n마우스가 모서리로 이동하여 매크로를 강제 종료합니다.")
