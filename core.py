@@ -9,6 +9,7 @@ import tkinter as tk
 import win32gui
 import win32con
 from mss import MSS
+from datetime import datetime
 
 # 기본 설정 및 전역 변수
 pyautogui.FAILSAFE = True 
@@ -305,7 +306,7 @@ def run_general_macro():
             
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 general_run_count += 1 
-                print(f"일반 던전 진행 횟수 (누적: {general_run_count}바퀴 / 가동 시간: {get_uptime()})")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 일반 던전 진행 횟수 (누적: {general_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 smart_sleep(0.2); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0)
                 state = "COMBAT"
             smart_sleep(0.2)
@@ -401,7 +402,7 @@ def run_abyss_macro():
             
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 abyss_run_count += 1 
-                print(f"어비스 진행 횟수 (누적: {abyss_run_count}바퀴 / 가동 시간: {get_uptime()})")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 어비스 진행 횟수 (누적: {abyss_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 smart_sleep(0.1); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0); break
             smart_sleep(0.2)
 
@@ -510,7 +511,7 @@ def run_raid_macro():
                 
             if find_img_center(IMG_SKILL_OFF, 0.8) or find_img_center(IMG_SKILL_ON, 0.8):
                 raid_run_count += 1
-                print(f"레이드 진행 횟수 (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 레이드 진행 횟수 (누적: {raid_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 smart_sleep(0.1); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0)
                 state = "COMBAT"
             smart_sleep(0.1) 
@@ -617,7 +618,7 @@ def run_fishing_macro():
         else: game_click(bite_loc)
             
         fish_run_count += 1
-        print(f"낚시 횟수 (누적: {fish_run_count}회 / 가동 시간: {get_uptime()})\n")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 낚시 횟수 (누적: {fish_run_count}회 / 가동 시간: {get_uptime()})\n")
         smart_sleep(0.2)
 
 # 메인 구동 모듈
