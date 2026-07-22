@@ -97,6 +97,7 @@ def get_game_monitor():
         
     if win32gui.IsIconic(hwnd):
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        
     left, top, right, bottom = win32gui.GetWindowRect(hwnd)
     return {"left": left, "top": top, "width": right - left, "height": bottom - top}
 
@@ -110,11 +111,18 @@ def find_img_center(img_path, conf=0.8):
         img_array = np.fromfile(img_path, np.uint8)
         template = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
         if template is None: return None
+        
+        # 템플릿(사진)이 게임 화면보다 크면 프로그램이 터지는 것을 방지
+        h, w = template.shape[:2]
+        sh, sw = screen_gray.shape[:2]
+        if h > sh or w > sw:
+            print(f"찾으려는 이미지({os.path.basename(img_path)})가 현재 게임 화면보다 큽니다.")
+            return None
+            
         result = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
         
         if max_val >= conf:
-            h, w = template.shape[:2]
             center_x = max_loc[0] + (w // 2) + monitor['left']
             center_y = max_loc[1] + (h // 2) + monitor['top']
             return (center_x, center_y)
@@ -452,7 +460,7 @@ def run_abyss_macro():
             if menu_btn: game_click(menu_btn); smart_sleep(0.5); continue
             smart_sleep(0.1)
 
-# 매크로 모듈
+# 레이드 모듈
 def run_raid_macro():
     global raid_run_count, first_startup_raid
     if first_startup_raid:
@@ -597,7 +605,7 @@ def run_fishing_macro():
 
         if bad_text_found:
             print("쓰레기 감지 취소합니다.")
-            pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w') # 단순 press보다 빠르고 확실한 캔슬법
+            pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w') 
             smart_sleep(1.5)
             continue
             
@@ -612,9 +620,7 @@ def run_fishing_macro():
         print(f"낚시 횟수 (누적: {fish_run_count}회 / 가동 시간: {get_uptime()})\n")
         smart_sleep(0.2)
 
-# ======================================================================
-# 🏁 9. 메인 구동 모듈
-# ======================================================================
+# 메인 구동 모듈
 def main():
     print("========================================")
     print("마비노기 모바일 매크로 가동 준비 완료")
