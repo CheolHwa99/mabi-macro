@@ -250,6 +250,7 @@ def start_countdown(mode_name):
     print("제어 상태 진입\n")
 
 # 일반 던전 모듈
+# 일반 던전 모듈
 def run_general_macro():
     global general_run_count, first_startup_general
     if first_startup_general:
@@ -290,7 +291,7 @@ def run_general_macro():
                         state = "LOADING"
             smart_sleep(0.2)
 
-elif state == "LOADING":
+        elif state == "LOADING": # 🌟 여기 들여쓰기 완벽하게 맞춤!
             check_coop_popup()
             cont_btn = find_img_center(IMG_CONTINUE_BTN, 0.8)
             if cont_btn: game_click(cont_btn)
@@ -348,7 +349,7 @@ elif state == "LOADING":
                         state = "LOBBY"; break
                     game_click_xy(clear_loc[0], clear_loc[1]); smart_sleep(0.05)
             smart_sleep(0.1)
-
+            
 # 어비스 모듈
 def run_abyss_macro():
     global abyss_run_count, first_startup_abyss, cached_abyss_options
