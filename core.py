@@ -290,10 +290,20 @@ def run_general_macro():
                         state = "LOADING"
             smart_sleep(0.2)
 
-        elif state == "LOADING":
+elif state == "LOADING":
             check_coop_popup()
             cont_btn = find_img_center(IMG_CONTINUE_BTN, 0.8)
             if cont_btn: game_click(cont_btn)
+            
+            enter_btn = find_img_center(IMG_ENTER_BTN, 0.8)
+            if not enter_btn: enter_btn = find_img_center(IMG_GENERAL_ENTER_AGAIN, 0.8)
+            if enter_btn:
+                game_click(enter_btn)
+                smart_sleep(0.5)
+                week_check = find_img_center(IMG_WEEK_CHECK, 0.8)
+                if week_check: game_click(week_check); smart_sleep(0.1)
+                popup_enter = find_img_center(IMG_POPUP_ENTER, 0.8)
+                if popup_enter: game_click(popup_enter)
             
             retry_btn = find_img_center(IMG_RETRY_BTN, 0.8)
             if retry_btn:
@@ -309,6 +319,7 @@ def run_general_macro():
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] 일반 던전 진행 횟수 (누적: {general_run_count}바퀴 / 가동 시간: {get_uptime()})")
                 smart_sleep(0.2); pyautogui.press('space'); smart_sleep(0.1); pyautogui.press('b'); smart_sleep(1.0)
                 state = "COMBAT"
+            
             smart_sleep(0.2)
 
         elif state == "COMBAT":
