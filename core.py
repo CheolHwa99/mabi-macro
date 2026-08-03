@@ -117,7 +117,7 @@ def find_img_center(img_path, conf=0.8):
         h, w = template.shape[:2]
         sh, sw = screen_gray.shape[:2]
         if h > sh or w > sw:
-            print(f"찾으려는 이미지({os.path.basename(img_path)})가 현재 게임 화면보다 큽니다.")
+            # 출력문이 너무 잦아지는 것을 방지하기 위해 낚시에서는 조용히 넘어갑니다.
             return None
             
         result = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
@@ -250,7 +250,6 @@ def start_countdown(mode_name):
     print("제어 상태 진입\n")
 
 # 일반 던전 모듈
-# 일반 던전 모듈
 def run_general_macro():
     global general_run_count, first_startup_general
     if first_startup_general:
@@ -291,7 +290,7 @@ def run_general_macro():
                         state = "LOADING"
             smart_sleep(0.2)
 
-        elif state == "LOADING": # 🌟 여기 들여쓰기 완벽하게 맞춤!
+        elif state == "LOADING": 
             check_coop_popup()
             cont_btn = find_img_center(IMG_CONTINUE_BTN, 0.8)
             if cont_btn: game_click(cont_btn)
@@ -562,24 +561,36 @@ def run_raid_macro():
                 state = "SHIP"
             smart_sleep(0.2)
 
-# 낚시 모듈
+# 🎣 낚시 모듈 (수정된 부분)
 def run_fishing_macro():
     global fish_run_count, first_startup_fish
     if first_startup_fish:
         start_countdown("수동 필터링 낚시") 
         first_startup_fish = False
+        
+        print("W키를 눌러 낚시 상태를 정리합니다.")
+        pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w')
+        smart_sleep(1.0)
 
     while True:
         check_pause()
-        check_coop_popup()
-        start_btn = find_img_center(IMG_FISH_STAND, 0.8)
-        if not start_btn: start_btn = find_img_center(IMG_FISH_SIT, 0.8)
-            
-        if start_btn:
-            game_click(start_btn)
-            smart_sleep(1.0) 
 
-        check_coop_popup()
+        # 낚시 이미지를 스캔하고 안 보이면 W 누르기 반복
+        while True:
+            check_pause()
+            start_btn = find_img_center(IMG_FISH_STAND, 0.8)
+            if not start_btn: start_btn = find_img_center(IMG_FISH_SIT, 0.8)
+
+            if start_btn:
+                game_click(start_btn)
+                smart_sleep(1.0)
+                break
+            else:
+                # 안 보이면 W 0.1초 누르고 다시 스캔 반복
+                pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w')
+                smart_sleep(0.5)
+
+        # 자동 모드 해제
         auto_icon = find_img_center(IMG_FISH_AUTO_MODE, 0.8)
         if auto_icon:
             game_click(auto_icon)
@@ -587,11 +598,11 @@ def run_fishing_macro():
             pyautogui.press('space')
             smart_sleep(0.5)
 
+        # 입질 대기
         bite_loc = None
         fishing_canceled = False
         while True:
             check_pause()
-            check_coop_popup()
             cancel_btn = find_img_center(IMG_FISH_STAND, 0.8)
             if not cancel_btn: cancel_btn = find_img_center(IMG_FISH_SIT, 0.8)
                 
@@ -607,23 +618,22 @@ def run_fishing_macro():
 
         if fishing_canceled: continue 
 
-        check_coop_popup()
-        
+        # 쓰레기 감지 시 취소
         bad_text_found = False
-        for _ in range(10):
+        for _ in range(15): # 0.05초 간격으로 15번 촘촘하게 감시
             if find_img_center(IMG_FISH_BAD_1, 0.8) or find_img_center(IMG_FISH_BAD_2, 0.8):
                 bad_text_found = True
                 break
             smart_sleep(0.05)
 
         if bad_text_found:
-            print("쓰레기 감지 취소합니다.")
-            pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w') 
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 쓰레기 감지 즉시 취소합니다.")
+            pyautogui.keyDown('w'); smart_sleep(0.1); pyautogui.keyUp('w') # 즉각적인 W키 캔슬
             smart_sleep(1.5)
             continue
             
-        # 쓰레기가 아니면 나머지 낚시 시간 대기
-        smart_sleep(5.0)
+        # 쓰레기가 아니면 나머지 대기
+        smart_sleep(5.8)
         
         final_bite = find_img_center(IMG_FISH_BITE, 0.8)
         if final_bite: game_click(final_bite)
@@ -631,7 +641,7 @@ def run_fishing_macro():
             
         fish_run_count += 1
         print(f"[{datetime.now().strftime('%H:%M:%S')}] 낚시 횟수 (누적: {fish_run_count}회 / 가동 시간: {get_uptime()})\n")
-        smart_sleep(0.2)
+        smart_sleep(0.5)
 
 # 메인 구동 모듈
 def main():
@@ -671,7 +681,7 @@ def main():
             smart_sleep(0.2) 
 
     except pyautogui.FailSafeException:
-        print("\n마우스가 모서리로 이동하여 매크로를 강제 종료합니다.")
+        print("\n마우스가 모서리로 이동하여 매크로 강제 종료합니다.")
     except KeyboardInterrupt:
         print("\n사용자가 매크로를 수동으로 중지했습니다. (Ctrl+C)")
 
