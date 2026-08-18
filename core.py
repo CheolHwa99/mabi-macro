@@ -657,6 +657,8 @@ def run_fishing_macro():
 
 # 메인 구동 모듈
 def main():
+    # 안티치트 우회
+    ctypes.windll.kernel32.SetConsoleTitleW("abyssganggang")
     print("========================================")
     print("마비노기 모바일 매크로 가동 준비 완료")
     print("작동 중 'F2' 키를 누르면 일시정지됩니다.")
