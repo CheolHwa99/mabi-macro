@@ -8,6 +8,7 @@ import tkinter as tk
 import keyboard
 from mss import MSS
 from datetime import datetime
+import keyboard
 
 # 기본 설정 및 전역 변수
 pyautogui.FAILSAFE = True 
